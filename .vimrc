@@ -1,176 +1,315 @@
-" Automatically setup Vundle on first run
-if !isdirectory(expand("~/.vim/bundle"))
-    call system("git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim")
+" vim: fdm=marker ts=2 sts=2 sw=2 fdl=0
+
+" Variables {{{
+let mapleader = "\<Space>"
+let s:is_windows = has('win32') || has('win64')
+"}}}
+
+" Setting up vim-plug as the package manager {{{
+if !filereadable(expand("~/.vim/autoload/plug.vim"))
+    echo "Installing vim-plug and plugins. Restart vim after finishing the process."
+    silent call mkdir(expand("~/.vim/autoload", 1), 'p')
+    execute "!curl -fLo ".expand("~/.vim/autoload/plug.vim", 1)." https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+    autocmd VimEnter * PlugInstall
 endif
 
-set nocompatible " Be IMproved
-
-" Vundle
-filetype off " Required by Vundle
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'ryanss/vim-hackernews'
-Plugin 'ctrlpvim/ctrlp.vim'
-Plugin 'tpope/vim-fugitive'
-Plugin 'editorconfig/editorconfig-vim'
-Plugin 'scrooloose/syntastic'
-
-" Prefers local node_modules/eslint for syntastic
-Plugin 'mtscout6/syntastic-local-eslint.vim'
-
-" Requires custom shell colors or iTerm colors from https://github.com/chriskempson/base16-iterm2
-Plugin 'chriskempson/base16-vim'
-
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-Plugin 'pangloss/vim-javascript'
-Plugin 'raichoo/purescript-vim'
-Plugin 'FrigoEU/psc-ide-vim'
-Plugin 'tomlion/vim-solidity'
-Plugin 'nvie/vim-flake8'
-Plugin 'JamshedVesuna/vim-markdown-preview'
-
-call vundle#end()
-
-" markdown preview options
-let vim_markdown_preview_hotkey='<C-m>'
-let vim_markdown_preview_github=1
-let vim_markdown_preview_browser='Firefox'
-
-" Automatically install bundles on first run
-if !isdirectory(expand("~/.vim/bundle/syntastic"))
-    execute 'silent PluginInstall'
-    execute 'silent q'
+if s:is_windows
+  set rtp+=~/.vim
 endif
 
+call plug#begin('~/.vim/plugged')
+let g:plug_url_format = 'https://github.com/%s.git'
+"}}}
+
+" Plugin settings {{{
+Plug 'ajh17/VimCompletesMe'
+Plug 'haya14busa/incsearch.vim' "{{{
+  map /  <Plug>(incsearch-forward)
+  map ?  <Plug>(incsearch-backward)
+"}}}
+Plug 'sjl/gundo.vim' "{{{
+  nnoremap <leader>gu :GundoToggle<cr>
+"}}}
+Plug 'kana/vim-textobj-user'
+Plug 'bps/vim-textobj-python'
+Plug 'Konfekt/FastFold'
+Plug 'octol/vim-cpp-enhanced-highlight'
+Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
+Plug 'tpope/vim-unimpaired'
+Plug 'raimondi/delimitmate' "{{{
+  let delimitMate_expand_cr = 2
+"}}}
+Plug 'kristijanhusak/vim-multiple-cursors' "{{{
+  let g:multi_cursor_normal_maps  = {'f': 1, 't': 1, 'F': 1, 'T':1,
+                                        \ 'c': 1, 'd': 1}
+"}}}
+Plug 'saaguero/vim-togglelist'
+Plug 'vim-scripts/matchit.zip'
+Plug 'majutsushi/tagbar' "{{{
+  nnoremap <silent> <F3> :TagbarToggle<CR>
+"}}}
+Plug 'sirver/ultisnips', { 'on': [] } "{{{
+  let g:UltiSnipsSnippetsDir = '~/.vim/plugged/vim-snippets/UltiSnips'
+  let g:UltiSnipsExpandTrigger="<c-j>"
+  let g:UltiSnipsJumpForwardTrigger="<c-j>"
+  let g:UltiSnipsJumpBackwardTrigger="<c-k>"
+  let g:UltiSnipsListSnippets="<c-l>"
+
+  inoremap <silent> <C-j> <C-r>=LoadUltiSnips()<cr>
+
+  " This function only runs when UltiSnips is not loaded
+  function! LoadUltiSnips()
+    let l:curpos = getcurpos()
+    execute plug#load('ultisnips')
+    call cursor(l:curpos[1], l:curpos[2])
+    call UltiSnips#ExpandSnippet()
+    return ""
+  endfunction
+"}}}
+Plug 'saaguero/vim-snippets'
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' } "{{{
+  nnoremap <silent> <F4> :NERDTreeToggle<CR>
+  nnoremap <silent> <F5> :NERDTreeFind<CR>
+  let NERDTreeShowHidden=1
+"}}}
+Plug 'endel/vim-github-colorscheme'
+Plug 'sjl/badwolf'
+Plug 'idbrii/vim-mark', { 'on': '<Plug>MarkSet' } " {{{
+  nmap <Leader>m <Plug>MarkSet
+"}}}
+Plug 'kien/ctrlp.vim' "{{{
+  nnoremap <leader>e :CtrlP<cr>
+  nnoremap <leader>E :CtrlPCurFile<cr>
+  nnoremap <leader>t :CtrlPBufTag<cr>
+  nnoremap <leader>T :CtrlPTag<cr>
+  nnoremap <leader>a :CtrlPBuffer<cr>
+  nnoremap <leader>A :CtrlPMRUFiles<cr>
+
+  let g:ctrlp_match_window = 'bottom,order:btt,min:20,max:20,results:20'
+  let g:ctrlp_working_path_mode = 0
+  let g:ctrlp_custom_ignore = {
+        \ 'dir':  '\v[\/](\.git|\.hg|\.svn)$',
+        \ 'file': '\.pyc$\|\.pyo$',
+        \ }
+  let g:ctrlp_open_multiple_files = '1jr'
+  let g:ctrlp_max_files = 0
+  let g:ctrlp_lazy_update = 50
+  let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
+  let g:ctrlp_buftag_types = { 'ant': '--language-force=ant' }
+"}}}
+Plug 'felikz/ctrlp-py-matcher'
+Plug 'justinmk/vim-gtfo'
+Plug 'davidhalter/jedi-vim', {'for': 'python'} "{{{
+  let g:jedi#popup_on_dot = 0
+  " just rely on tab trigger
+  let g:jedi#completions_command = ""
+  " this prevents jedi to mess with completeopt
+  let g:jedi#auto_vim_configuration = 0
+  let g:jedi#popup_select_first = 0
+  let g:jedi#goto_assignments_command = "<leader>jg"
+  let g:jedi#goto_definitions_command = "<leader>jd"
+  let g:jedi#usages_command = "<leader>jn"
+  let g:jedi#documentation_command = '<leader>jk'
+  let g:jedi#rename_command = "<leader>jr"
+"}}}
+
+call plug#end()
+"}}}
+
+" Vim sensible settings {{{
+set nocompatible
+set encoding=utf-8
+set listchars=trail:.,tab:>\ ,eol:$
+set lazyredraw
+set laststatus=2
+set statusline=%-4m%f\ %y\ \ %=%{&ff}\ \|\ %{&fenc}\ \ [%l:%c]
+set incsearch hlsearch
+set nonumber
+set backspace=indent,eol,start
+set nostartofline
+set autoread
+set scrolloff=3
+set wildmenu wildignorecase wildmode=list:longest,full
+set cursorline
+set ignorecase smartcase
+set showmode showcmd
+set shortmess+=I
+set hidden
+set history=1000
+set complete-=i completeopt=menu
+set splitright splitbelow
+set winwidth=80
+set display+=lastline
+set foldenable foldmethod=syntax foldlevelstart=99
+set ttimeoutlen=50
+set switchbuf=useopen
+set mouse=a
+set breakindent
+
+filetype plugin indent on
 syntax on
-filetype plugin indent on       " Sets indent mode based on filetype
-syntax enable
-set background=dark
-colorscheme base16-tomorrow     " Default color scheme
-highlight LineNr   ctermfg=darkgrey ctermbg=black
 
-set clipboard=unnamed           " Share OS clipboard
-set encoding=utf-8              " default character encoding
-set hidden                      " do not unload buffers that get hidden
-
-set wrap                        " Wrap lines visually
-set number                      " Show line numbers
-set scrolloff=3                 " keep minimal number of lines above/below cursor
-set splitright                  " open vertical split right of current window
-set sidescroll=3                " scroll sideways 3 characters at a time
-set textwidth=0                 " Maximum line text width
-set colorcolumn=120             " show max line-width
-
-set foldmethod=indent           " Fold based on indent
-set foldnestmax=3               " Deepest fold is 3 levels
-set nofoldenable                " Dont fold by default
-
-set showcmd                     " Show command line at bottom of screen
-set laststatus=2                " Show last status
-set visualbell                  " use visual bell instead of beeping
-
-set autoindent                  " Indent automatically
-set cindent                     " Syntax aware auto-indent
-set backspace=indent,eol,start  " Set backspace to work for all characters
-
-set expandtab                   " Spaces for tabs
-set smarttab                    " <BS> deletes a shiftwidth worth of space
-set tabstop=4                   " 2 spaces for each tab in file
-set softtabstop=4               " 2 spaces for pressing tab key
-set shiftwidth=4                " 2 spaces for indentation
-
-" Leader key
-let mapleader = ","
-let g:mapleader = ","
-let g:user_emmet_leader_key = '<C-e>'
-
-map <tab> :bn<cr>               " Next buffer
-map <S-tab> :bp<cr>             " Previous buffer
-map <S-q> :bd<cr>               " Close buffer
-
-set mouse=a                     " Allow mouse usage in terminal
-
-set showmatch                   " Briefly jump to matching bracket
-set ignorecase                  " Ignore case when pattern matching
-set smartcase                   " Only if all characters are lower case
-set incsearch                   " Highlight matches while typing search
-set hlsearch                    " Keep previous search highlighted
-
-" Use same pane split character as tmux
-set fillchars+=vert:│
-
-" Do not create swap files
-set nobackup
-set nowritebackup
+" better backup, swap and undo storage {{{
 set noswapfile
+set backup
+set undofile
 
-" CtrlP
-set rtp+=~/.vim/bundle/ctrlp.vim
-let g:ctrlp_working_path_mode = ''
-nmap <Leader>p :CtrlP<CR>
+set backupdir=~/.vim/dirs/backup
+set undodir=~/.vim/dirs/undo
+if !isdirectory(&backupdir)
+  call mkdir(&backupdir, "p")
+endif
+if !isdirectory(&undodir)
+  call mkdir(&undodir, "p")
+endif
+"}}}
+"}}}
 
-" Ignore certain things
-set wildignore+=output,dist,bower_components,build,.git,node_modules,_book
+" GUI & Terminal setttings {{{
+if has("gui_running")
+  if has("gui_macvim")
+    set guifont=Consolas:h15
+  elseif has("gui_win32")
+    autocmd GUIEnter * simalt ~x " open maximize in Windows
+    set guifont=Consolas:h11
+  endif
+  set guioptions= " disable all UI options
+  set guicursor+=a:blinkon0 " disable blinking cursor
+  autocmd GUIEnter * set visualbell t_vb=
+else
+  set noerrorbells visualbell t_vb=
+  set term=xterm
+  set t_ut= " setting for looking properly in tmux
+  set t_ti= t_te= " prevent vim from clobbering the scrollback buffer
+  let &t_Co = 256
+  if s:is_windows " trick to support 256 colors in conemu for Windows
+    let &t_AF="\e[38;5;%dm"
+    let &t_AB="\e[48;5;%dm"
+  endif
+endif
 
-" Press <esc> to clear previous search highlight
-nnoremap <Leader>c :noh<CR>
+augroup CustomColors
+  autocmd!
+  autocmd ColorScheme * highlight CursorLine cterm=bold ctermbg=NONE gui=bold guibg=NONE
+augroup END
 
-" map region expansion to v
-vmap v <Plug>(expand_region_expand)
-vmap <C-v> <Plug>(expand_region_shrink)
+colorscheme badwolf
+"}}}
 
-" Easier split-pane navigation
-nmap <silent> <c-h> :wincmd h<CR>
-nmap <silent> <c-l> :wincmd l<CR>
-nmap <silent> <c-j> :wincmd j<CR>
-nmap <silent> <c-k> :wincmd k<CR>
+" Spaces and Filetype settings {{{
+set autoindent
+set expandtab smarttab
+set tabstop=4 softtabstop=4 shiftwidth=4
 
-" Git/fugitive shortcuts
-nnoremap <Leader>gs :Gstatus<CR>
-nnoremap <Leader>gc :Gcommit<CR>
-nnoremap <Leader>gd :Gdiff<CR>
-nnoremap <Leader>gf <C-W>h<C-W>czR
-nnoremap <Leader>gp :Git push<CR>
+augroup CustomFiletype
+  autocmd!
+  autocmd BufNewFile,BufRead *.html set filetype=html.htmldjango
+  autocmd BufNewFile,BufRead *.wxs set filetype=wxs.xml
+  autocmd BufNewFile,BufRead *.wxi set filetype=wxi.xml
+  autocmd BufNewFile,BufRead *.md set filetype=markdown
 
-" Mappings for misc plugins
-map <SPACE> <Plug>(easymotion-s2)
-map <Leader>a <Plug>(EasyAlign)
+  autocmd FileType html,xml,javascript set tabstop=2 softtabstop=2 shiftwidth=2
+  autocmd FileType python,vim setlocal foldmethod=indent
+  autocmd Filetype text setlocal textwidth=80
+augroup END
+"}}}
 
-" Airline
-let g:airline#extensions#tabline#enabled = 1
-let g:airline_powerline_fonts = 1
-let g:airline_theme = 'bubblegum'
-let g:airline_skip_empty_sections = 1
+" Custom utils/mappings {{{
+" rsi mappings
+inoremap <C-a> <Home>
+cnoremap <C-a> <Home>
+inoremap <C-e> <End>
+cnoremap <C-e> <End>
 
-" Syntastic
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-let g:syntastic_javascript_checkers = ['eslint']
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 0
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-"let g:syntastic_debug = 3
+" Filter command history the same way as <Up> <Down> do
+cnoremap <C-p> <Up>
+cnoremap <C-n> <Down>
 
-" Python
-let python_highlight_all=1
+" Source selection or line (from sjl/dotfiles)
+vnoremap <leader>S y:@"<cr>
+nnoremap <leader>S ^vg_y:@"<cr>
 
-" PureScript
-au FileType purescript nmap <leader>t :PSCIDEtype<CR>
-au FileType purescript nmap <leader>s :PSCIDEapplySuggestion<CR>
-au FileType purescript nmap <leader>a :PSCIDEaddTypeAnnotation<CR>
-au FileType purescript nmap <leader>i :PSCIDEimportIdentifier<CR>
-au FileType purescript nmap <leader>qd :PSCIDEremoveImportQualifications<CR>
-au FileType purescript nmap <leader>qa :PSCIDEaddImportQualifications<CR>
+" avoid common typos
+command! -bang Q q<bang>
+command! -bang W w<bang>
 
-let g:purescript_indent_if = 0
-let g:purescript_indent_case = 0
-let g:purescript_indent_let = 0
-let g:purescript_indent_where = 0
-let g:purescript_indent_do = 0
+" replace ex mode map and use it for repeating last executed macro
+nnoremap Q @@
 
-let g:psc_ide_syntastic_mode = 1
+" save as sudo
+cabbrev w!! w !sudo tee "%"
+
+" easy system clipboard copy/paste
+noremap <Leader>y "*y
+noremap <Leader>Y "*Y
+noremap <Leader>p "*p
+noremap <Leader>P "*P
+
+" copy full file path to clipboard
+nnoremap <silent><Leader>gp :let @+ = expand("%:p")<cr>
+
+" easy window navigation
+nnoremap <silent> <c-l> <c-w>l
+nnoremap <silent> <c-j> <c-w>j
+nnoremap <silent> <c-h> <c-w>h
+nnoremap <silent> <c-k> <c-w>k
+nnoremap <silent> <leader>\ <c-^>
+
+" cd to directory of current file
+nnoremap <silent> <leader>cd :lcd %:p:h<CR>
+
+" easy vimrc handling
+nnoremap <leader>cc :tabedit $MYVIMRC<cr>
+nnoremap <leader>cs :source $MYVIMRC<cr>
+
+" visual shifting (does not exit Visual mode)
+vnoremap < <gv
+vnoremap > >gv
+
+" rehighlights the last pasted text
+nnoremap gb `[v`]
+
+augroup CustomUtils
+  autocmd!
+  " Open the file placing the cursor where it was
+  autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+        \| exe "normal! g'\"" | endif
+
+  " Use xmllint for xml formatting if availabe
+  if executable('xmllint')
+    autocmd FileType xml setlocal equalprg=xmllint\ --format\ --recover\ -\ 2>/dev/null
+  endif
+
+  " Close preview window when leaving insert mode http://stackoverflow.com/a/3107159/854676
+  autocmd InsertLeave * if pumvisible() == 0|pclose|endif
+augroup END
+
+" clear the search buffer when hitting return
+nnoremap <silent> <leader><cr> :nohlsearch<cr>
+
+" split lines on whitespace
+function! SplitOnSpace()
+  execute "normal f\<space>i\r\e"
+  " make it repeatable (requires vim-repeat)
+  silent! call repeat#set("\<Plug>CustomSplitOnSpace")
+endfunction
+nnoremap <silent> <Plug>CustomSplitOnSpace :call SplitOnSpace()<cr>
+nnoremap <silent> <leader>k :call SplitOnSpace()<cr>
+
+" join lines (convenient mapping for my workflow)
+nnoremap <silent> <leader>j J
+
+" Use Ag as default grep if available
+if executable('ag')
+  set grepprg=ag\ --nogroup\ --nocolor\ --column
+  set grepformat=%f:%l:%c:%m
+  command! -nargs=+ -bang Ag silent! grep <args> | redraw! | botright copen
+endif
+
+" source private vimrc file if available
+if filereadable(expand("~/.vimrc.local"))
+  source ~/.vimrc.local
+endif
+"}}}
